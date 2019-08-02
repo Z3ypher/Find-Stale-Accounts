@@ -1,0 +1,71 @@
+Add-Type -AssemblyName System.Windows.Forms
+[System.Windows.Forms.Application]::EnableVisualStyles()
+#Designs GUI that creates a simple form where users can type in the desired cutoff date
+$Form                            = New-Object system.Windows.Forms.Form
+$Form.ClientSize                 = '335,186'
+$Form.text                       = "Form"
+$Form.TopMost                    = $false
+
+$TextBox1                        = New-Object system.Windows.Forms.TextBox
+$TextBox1.multiline              = $false
+$TextBox1.text = $Date
+$TextBox1.width                  = 125
+$TextBox1.height                 = 20
+$TextBox1.location               = New-Object System.Drawing.Point(92,41)
+$TextBox1.Font                   = 'Microsoft Sans Serif,10'
+
+$Label                           = New-Object system.Windows.Forms.Label
+$Label.text                      = "Type in the Last Access Time Date"
+$Label.AutoSize                  = $true
+$Label.width                     = 25
+$Label.height                    = 10
+$Label.location                  = New-Object System.Drawing.Point(54,12)
+$Label.Font                      = 'Microsoft Sans Serif,10'
+
+$OKButton                        = New-Object system.Windows.Forms.Button
+$OKButton.text                   = "OK"
+$OKButton.width                  = 60
+$OKButton.height                 = 30
+$OKButton.location               = New-Object System.Drawing.Point(32,119)
+$OKButton.Font                   = 'Microsoft Sans Serif,10'
+$OKButton.DialogResult = [System.Windows.Forms.DialogResult]::OK
+$Form.AcceptButton = $OKButton
+$Form.Controls.Add($OKButton)
+
+$CancelButton                    = New-Object system.Windows.Forms.Button
+$CancelButton.text               = "Cancel"
+$CancelButton.width              = 60
+$CancelButton.height             = 30
+$CancelButton.location           = New-Object System.Drawing.Point(216,118)
+$CancelButton.Font               = 'Microsoft Sans Serif,10'
+$CancelButton.DialogResult = [System.Windows.Forms.DialogResult]::OK
+$Form.AcceptButton = $CancelButton
+$Form.Controls.Add($CancelButton)
+
+$Form.controls.AddRange(@($TextBox1,$Label,$OKButton,$CancelButton))
+
+if ($Form.ShowDialog() -eq "OK"){
+$Date = $TextBox1.text
+}
+
+else
+        {
+            $res = [System.Windows.Forms.MessageBox]::Show("You clicked Cancel. Would you like to try again or exit?", "Select a location", [System.Windows.Forms.MessageBoxButtons]::RetryCancel)
+            if($res -eq "Cancel")
+            {
+                #Ends script
+                return
+            }
+        }
+
+
+
+#Gathers data using Get-Childitem, Looks for objects that are containers(Profiles),Finds them by date last access going backwards, prints name 
+#and last time access.
+
+$arr = Get-ChildItem -Path C:\Users | 
+       Where-Object {$_.PSIsContainer} | 
+       Where-Object{$_.LastAccessTime -lt $Date} |
+       Foreach-Object {$_.Name, $_.LastAccessTime}
+
+$arr | Out-File -FilePath C:\Last.txt
